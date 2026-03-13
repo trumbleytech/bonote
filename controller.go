@@ -50,7 +50,7 @@ func Chapter_Get(context *gin.Context) {
 	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
-	c_id, err := strconv.Atoi(id)
+	chapter_id, err := strconv.Atoi(id)
 	if err != nil {
 		// handle bad data
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -58,6 +58,24 @@ func Chapter_Get(context *gin.Context) {
 		})
 		return
 	}
-	fmt.Printf("chapter method hit. id = %d\n", c_id)
+	fmt.Printf("chapter method hit. id = %d\n", chapter_id)
 	context.JSON(http.StatusOK, chapter)
+}
+
+func Note_Get(context *gin.Context) {
+	// pull id from params
+	id := context.Params.ByName("id")
+
+	// convert string to id to validate input
+	note_id, err := strconv.Atoi(id)
+	if err != nil {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid note id",
+			"params":  context.Params,
+		})
+		return
+	}
+	fmt.Printf("note method hit. id = %d\n", note_id)
+	context.JSON(http.StatusOK, note)
 }
