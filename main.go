@@ -13,12 +13,6 @@ import (
 //creating test versions of models before db is setup
 
 var (
-	book = Book{
-		1,
-		"But How Do It Know?",
-		"J Clark Scott",
-	}
-
 	chapter = Chapter{
 		1,
 		0,
@@ -37,43 +31,20 @@ var (
 )
 
 func main() {
+	// validate env vars & init global DB
 	if err := Validate_db_config(); err != nil {
 		log.Fatal(err)
 	}
-	db, err := Open_DB_Connection()
+	err := Open_DB_Connection()
 	if err != nil {
 		log.Fatal(err)
 	}
-	var qbook Book
-	result := db.QueryRow("SELECT * FROM BOOK WHERE ID = $1", 1 /*book.Id*/)
-	err = result.Scan(&qbook.Id, &qbook.Title, &qbook.Author)
-	if err != nil {
-		log.Printf("SCAN FAIL. ERROR:\n%s\n", err)
-	}
-	fmt.Printf("%+v\n", qbook)
 
 	// init gin
 	router := gin.Default()
 
 	// define basic get method for book
-	router.GET("/book/:id", func(context *gin.Context) {
-		// pull id from params
-		id := context.Params.ByName("id")
-
-		// convert string to id to validate input
-		c_id, err := strconv.Atoi(id)
-		if err != nil {
-			// handle bad data
-			context.JSON(http.StatusBadRequest, gin.H{
-				"message": "invalid book id",
-				"params":  context.Params,
-			})
-			return
-		}
-		fmt.Printf("book method hit. id = %d\n", c_id)
-		context.JSON(http.StatusOK, book)
-	})
-
+	router.GET("/book/:id", Book_Get)
 	router.GET("/chapter/:id", func(context *gin.Context) {
 		// pull id from params
 		id := context.Params.ByName("id")
@@ -83,8 +54,7 @@ func main() {
 		if err != nil {
 			// handle bad data
 			context.JSON(http.StatusBadRequest, gin.H{
-				"message": "invalid chapter id",
-				"params":  context.Params,
+				"message": "Invalid Chapter Id",
 			})
 			return
 		}
