@@ -45,23 +45,7 @@ func main() {
 
 	// define basic get method for book
 	router.GET("/book/:id", Book_Get)
-	router.GET("/chapter/:id", func(context *gin.Context) {
-		// pull id from params
-		id := context.Params.ByName("id")
-
-		// convert string to id to validate input
-		c_id, err := strconv.Atoi(id)
-		if err != nil {
-			// handle bad data
-			context.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid Chapter Id",
-			})
-			return
-		}
-		fmt.Printf("chapter method hit. id = %d\n", c_id)
-		context.JSON(http.StatusOK, chapter)
-	})
-
+	router.GET("/chapter/:id", Chapter_Get)
 	router.GET("/note/:id", func(context *gin.Context) {
 		// pull id from params
 		id := context.Params.ByName("id")
