@@ -27,7 +27,7 @@ func Book_Get(context *gin.Context) {
 	// query db for book by book id
 	result := Query_Book_By_Id(book_id)
 	var book Book
-	err = result.Scan(&book.Id, &book.Title, &book.Author)
+	err = result.Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{

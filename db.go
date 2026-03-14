@@ -38,6 +38,6 @@ func Open_DB_Connection() error {
 }
 
 func Query_Book_By_Id(book_id int) *sql.Row {
-	result := DB.QueryRow("SELECT id,title,author FROM BOOK WHERE ID = $1", book_id)
+	result := DB.QueryRow("SELECT id,title,author,created_on_utc FROM BOOK WHERE ID = $1", book_id)
 	return result
 }

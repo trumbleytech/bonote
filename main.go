@@ -13,18 +13,20 @@ import (
 var (
 	chapter = Chapter{
 		1,
+		1,
 		0,
 		"Chapter Name",
-		1,
+		time.Now().UTC(),
+		time.Now().UTC(),
 	}
 
 	note = Note{
+		1,
 		1,
 		"Name of note",
 		"Some content for a note",
 		time.Now().UTC(),
 		time.Now().UTC(),
-		1,
 	}
 )
 
