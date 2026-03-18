@@ -3,31 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/gin-gonic/gin"
-)
-
-//creating test versions of models before db is setup
-
-var (
-	chapter = Chapter{
-		1,
-		1,
-		0,
-		"Chapter Name",
-		time.Now().UTC(),
-		time.Now().UTC(),
-	}
-
-	note = Note{
-		1,
-		1,
-		"Name of note",
-		"Some content for a note",
-		time.Now().UTC(),
-		time.Now().UTC(),
-	}
 )
 
 func main() {
