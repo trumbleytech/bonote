@@ -58,8 +58,26 @@ func Chapter_Get(context *gin.Context) {
 		})
 		return
 	}
-	fmt.Printf("chapter method hit. id = %d\n", chapter_id)
+	// query db for chapter by chapter id
+	result := Query_Chapter_By_Id(chapter_id)
+	var chapter Chapter
+	err = result.Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("No chapter found with Id %d", chapter_id),
+			})
+			return
+		} else {
+			log.Printf("SQL Error:\n%s\n", err)
+			context.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal Server Error. Please try again later.",
+			})
+			return
+		}
+	}
 	context.JSON(http.StatusOK, chapter)
+
 }
 
 func Note_Get(context *gin.Context) {
@@ -71,11 +89,27 @@ func Note_Get(context *gin.Context) {
 	if err != nil {
 		// handle bad data
 		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "invalid note id",
-			"params":  context.Params,
+			"message": "Invalid Note Id",
 		})
 		return
 	}
-	fmt.Printf("note method hit. id = %d\n", note_id)
+	// query db for note by note id
+	result := Query_Note_By_Id(note_id)
+	var note Note
+	err = result.Scan(&note.Id, &note.Chapter_id, &note.Name, &note.Content, &note.Created_On_UTC, &note.Modified_On_UTC)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("No note found with Id %d", note_id),
+			})
+			return
+		} else {
+			log.Printf("SQL Error:\n%s\n", err)
+			context.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal Server Error. Please try again later.",
+			})
+			return
+		}
+	}
 	context.JSON(http.StatusOK, note)
 }
