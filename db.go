@@ -41,3 +41,13 @@ func Query_Book_By_Id(book_id int) *sql.Row {
 	result := DB.QueryRow("SELECT id,title,author,created_on_utc FROM BOOK WHERE ID = $1", book_id)
 	return result
 }
+
+func Query_Chapter_By_Id(chapter_id int) *sql.Row {
+	result := DB.QueryRow("SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1", chapter_id)
+	return result
+}
+
+func Query_Note_By_Id(note_id int) *sql.Row {
+	result := DB.QueryRow("SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1", note_id)
+	return result
+}
