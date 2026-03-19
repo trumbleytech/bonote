@@ -5,9 +5,9 @@ import (
 )
 
 type Book struct {
-	Id              uint
-	Title           string
-	Author          string
+	Id              uint   `json:"id"`
+	Title           string `json:"title"`
+	Author          string `json:"author,omitempty"`
 	Created_On_UTC  *time.Time
 	Modified_On_UTC *time.Time
 }
