@@ -113,3 +113,33 @@ func Note_Get(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, note)
 }
+
+func Book_Insert(context *gin.Context) {
+	var book Book
+	// check if body valid
+	if err := context.BindJSON(&book); err != nil {
+		log.Printf("BindJSON book failed. Err:\n%s\n", err)
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "malformed request body",
+		})
+		return
+	}
+	// check that title has valid value
+	if len(book.Title) < 1 {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Required field title not provided",
+		})
+		return
+	}
+	// insert values by db query
+	err := Insert_Book(book.Title, book.Author)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	// send back 204
+	context.Status(http.StatusNoContent)
+}
