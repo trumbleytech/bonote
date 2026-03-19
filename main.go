@@ -20,9 +20,15 @@ func main() {
 	// init gin
 	router := gin.Default()
 
-	// define basic get method for book
+	// BOOK
+	router.POST("/book", Book_Insert)
+	router.PATCH("/book/:id", Book_Update)
 	router.GET("/book/:id", Book_Get)
+
+	// CHAPTER
 	router.GET("/chapter/:id", Chapter_Get)
+
+	// NOTE
 	router.GET("/note/:id", Note_Get)
 
 	// start the server

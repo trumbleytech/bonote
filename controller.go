@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -142,4 +144,23 @@ func Book_Insert(context *gin.Context) {
 
 	// send back 204
 	context.Status(http.StatusNoContent)
+}
+
+func Book_Update(context *gin.Context) {
+	// read body as byte array
+	barray, err := io.ReadAll(context.Request.Body)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	// create str str map to unmarshall body into
+	reqbodymap := make(map[string]string)
+
+	// unmarshall byte array into map
+	json.Unmarshal(barray, &reqbodymap)
+	log.Printf("Book update map: %v+", reqbodymap)
+
 }
