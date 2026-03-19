@@ -51,3 +51,13 @@ func Query_Note_By_Id(note_id int) *sql.Row {
 	result := DB.QueryRow("SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1", note_id)
 	return result
 }
+
+func Insert_Book(title, author string) error {
+	_, err := DB.Exec("INSERT INTO book (title,author) VALUES ($1,$2)", title, author)
+	if err != nil {
+		log.Printf("Book insert failed. Err:\n%s\n", err)
+		return err
+	}
+	log.Printf("INSERT BOOK: title: %s || author: %s\n", title, author)
+	return nil
+}
