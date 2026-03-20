@@ -32,9 +32,12 @@ func Open_DB_Connection() error {
 		log.Printf("Error making DB Connection. Err:\n%s\n", err)
 		return err
 	}
-	err = DB.Ping()
-	log.Printf("DB Connected Successfully.\n")
-	return err
+	if err = DB.Ping(); err != nil {
+		return err
+	} else {
+		log.Printf("DB Connected Successfully.\n")
+	}
+	return nil
 }
 
 func Query_Book_By_Id(book_id int) *sql.Row {
