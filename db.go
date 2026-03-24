@@ -12,7 +12,7 @@ import (
 // global DB obj
 var DB *sql.DB
 
-func Validate_db_config() error {
+func ValidateDBConfig() error {
 	if len(DB_HOST) < 1 ||
 		len(DB_NAME) < 1 ||
 		len(DB_PORT) < 1 ||
@@ -23,7 +23,7 @@ func Validate_db_config() error {
 	return nil
 }
 
-func Open_DB_Connection() error {
+func OpenDBConnection() error {
 	var err error
 	conn_str := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME, DB_SSL)
 	DB, err = sql.Open("postgres", conn_str)
@@ -40,38 +40,63 @@ func Open_DB_Connection() error {
 	return nil
 }
 
-func Query_Book_By_Id(book_id int) *sql.Row {
-	result := DB.QueryRow("SELECT id,title,author,created_on_utc FROM BOOK WHERE ID = $1", book_id)
-	return result
+func GetBookByID(bookID int) (Book, error) {
+	var book Book
+	query := "SELECT id,title,author,created_on_utc FROM BOOK WHERE ID = $1"
+	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC, &book.Modified_On_UTC)
+	if err != nil {
+		log.Printf("GetBookByID failed. Err: %s\n", err)
+		return Book{}, GenerateResourceNotFoundError("Book", bookID)
+
+	}
+	return book, nil
 }
 
-func Query_Chapter_By_Id(chapter_id int) *sql.Row {
-	result := DB.QueryRow("SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1", chapter_id)
-	return result
+func GetChapterByID(chapterID int) (Chapter, error) {
+	var chapter Chapter
+	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
+	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, chapter.Name, chapter.Created_On_UTC, chapter.Modified_On_UTC)
+	if err != nil {
+		log.Printf("GetChapterByID failed. Err: %s\n", err)
+		return Chapter{}, err
+	}
+	return chapter, nil
 }
 
-func Query_Note_By_Id(note_id int) *sql.Row {
-	result := DB.QueryRow("SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1", note_id)
-	return result
+func GetNoteByID(noteID int) (Note, error) {
+	var note Note
+	query := "SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1"
+	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.Chapter_id, &note.Name, &note.Content, &note.Created_On_UTC, &note.Modified_On_UTC)
+	if err != nil {
+		log.Printf("GetNoteByID failed. Err: %s\n", err)
+		return Note{}, GenerateResourceNotFoundError("Note", noteID)
+
+	}
+	return note, nil
 }
 
-func Insert_Book(title, author string) (BookResponse, error) {
+func SaveBookDB(title, author string) (Book, error) {
 	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,created_on_utc"
-	var bookRes BookResponse
-	err := DB.QueryRow(query, title, author).Scan(&bookRes.Id, &bookRes.Title, &bookRes.Author, &bookRes.Created_On_UTC)
+	var book Book
+	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC)
 	if err != nil {
-		log.Printf("Book insert failed. Err:\n%s\n", err)
-		return BookResponse{}, err
+		log.Printf("SaveBook failed. Err:%s\n", err)
+		return Book{}, err
 	}
-	log.Printf("INSERT BOOK: title: %s || author: %s\n", title, author)
-	return bookRes, nil
+	return book, nil
 }
 
-func Insert_Chapter(book_id uint, number *uint16, name string) error {
-	_, err := DB.Exec("INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3)", book_id, number, name)
+func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
+	var chapter Chapter
+	query := "INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3) RETURNING id,book_id,number,name,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
 	if err != nil {
-		log.Printf("Chapter insert failed. Err:\n%s\n", err)
-		return err
+		log.Printf("SaveChapter failed. Err:%s\n", err)
+		return Chapter{}, err
 	}
-	return nil
+	return chapter, nil
+}
+
+func GenerateResourceNotFoundError(resourceName string, resourceID int) error {
+	return fmt.Errorf("%s with ID %d not found.", resourceName, resourceID)
 }
