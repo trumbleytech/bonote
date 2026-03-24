@@ -27,6 +27,7 @@ func main() {
 
 	// CHAPTER
 	router.GET("/chapter/:id", Chapter_Get)
+	router.POST("/chapter", Chapter_Insert)
 
 	// NOTE
 	router.GET("/note/:id", Note_Get)

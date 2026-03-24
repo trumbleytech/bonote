@@ -64,3 +64,12 @@ func Insert_Book(title, author string) error {
 	log.Printf("INSERT BOOK: title: %s || author: %s\n", title, author)
 	return nil
 }
+
+func Insert_Chapter(book_id uint, number *uint16, name string) error {
+	_, err := DB.Exec("INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3)", book_id, number, name)
+	if err != nil {
+		log.Printf("Chapter insert failed. Err:\n%s\n", err)
+		return err
+	}
+	return nil
+}

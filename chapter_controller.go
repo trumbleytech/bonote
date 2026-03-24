@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,4 +44,74 @@ func Chapter_Get(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, chapter)
 
+}
+
+func Chapter_Insert(context *gin.Context) {
+	var chapter Chapter
+	// check if body valid
+	if err := context.BindJSON(&chapter); err != nil {
+		log.Printf("BindJSON book failed. Err:\n%s\n", err)
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "malformed request body",
+		})
+		return
+	}
+
+	if err := Validate_Chapter_Insert(chapter.Book_id, chapter.Number, chapter.Name); err != nil {
+		log.Printf("Chapter validation failed. Err:\n%s\n", err)
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// insert values by db query
+	err := Insert_Chapter(chapter.Book_id, chapter.Number, chapter.Name)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	// send back 204
+	context.Status(http.StatusNoContent)
+}
+
+// helper func to check if chapter number is valid
+func Valid_chapter_number(chapter_number uint16) bool {
+	if chapter_number > 0 {
+		return true
+	}
+	return false
+}
+
+// helper func to check valid book id
+func Valid_book_id(book_id uint) bool {
+	if book_id > 0 {
+		return true
+	}
+	return false
+}
+
+// consolidated logic to validate required fields for chapter insert
+func Validate_Chapter_Insert(book_id uint, number *uint16, name string) error {
+	// require book id rel
+	if !Valid_book_id(book_id) {
+		return errors.New("Invalid book_id.")
+	}
+
+	// name or chapter must be supplied
+	if len(name) < 1 {
+		// check chapter number if no name supplied
+		if number != nil {
+			if !Valid_chapter_number(*number) {
+				return errors.New("Invalid Chapter number.")
+			}
+		} else {
+			return errors.New("Either Chapter Name or Chapter Number is required.")
+		}
+	}
+
+	return nil
 }
