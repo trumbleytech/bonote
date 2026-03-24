@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Note_Get(context *gin.Context) {
+func GetNote(context *gin.Context) {
 	// pull id from params
 	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
-	note_id, err := strconv.Atoi(id)
+	noteID, err := strconv.Atoi(id)
 	if err != nil {
 		// handle bad data
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -24,13 +24,13 @@ func Note_Get(context *gin.Context) {
 		return
 	}
 	// query db for note by note id
-	result := Query_Note_By_Id(note_id)
-	var noteres NoteResponse
-	err = result.Scan(&noteres.Id, &noteres.Chapter_id, &noteres.Name, &noteres.Content, &noteres.Created_On_UTC, &noteres.Modified_On_UTC)
+	note, err := GetNoteByID(noteID)
+
+	// handle db func error
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
-				"message": fmt.Sprintf("No note found with Id %d", note_id),
+				"message": fmt.Sprintf("Note with %d not found.", noteID),
 			})
 			return
 		} else {
@@ -41,5 +41,5 @@ func Note_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, noteres)
+	context.JSON(http.StatusOK, note)
 }

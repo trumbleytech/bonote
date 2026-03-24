@@ -12,28 +12,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Book_Get(context *gin.Context) {
+func GetBook(context *gin.Context) {
 	// pull id from params
 	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
-	book_id, err := strconv.Atoi(id)
-	if (err != nil) || ((book_id < 0) || (book_id > 2147483647)) {
+	bookID, err := strconv.Atoi(id)
+	if (err != nil) || ((bookID < 0) || (bookID > 2147483647)) {
 		// handle bad data
 		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid book Id",
+			"message": "Invalid bookId",
 		})
 		return
 	}
 
 	// query db for book by book id
-	result := Query_Book_By_Id(book_id)
-	var bookres BookResponse
-	err = result.Scan(&bookres.Id, &bookres.Title, &bookres.Author, &bookres.Created_On_UTC)
+	book, err := GetBookByID(bookID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
-				"message": fmt.Sprintf("No book found with Id %d", book_id),
+				"message": fmt.Sprintf("Book with ID %d not found.", bookID),
 			})
 			return
 		} else {
@@ -44,28 +42,31 @@ func Book_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, bookres)
+	context.JSON(http.StatusOK, book)
 }
 
-func Book_Insert(context *gin.Context) {
-	var bookreq BookRequest
+func SaveBook(context *gin.Context) {
+	var book Book
 	// check if body valid
-	if err := context.BindJSON(&bookreq); err != nil {
-		log.Printf("BindJSON book failed. Err:\n%s\n", err)
+	if err := context.ShouldBindJSON(&book); err != nil {
+		log.Printf("ShouldBindJSON book failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Malformed request body.",
 		})
 		return
 	}
 	// check that title has valid value
-	if len(bookreq.Title) < 1 {
+	if len(book.Title) < 1 {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Required field title not provided",
 		})
 		return
 	}
+	// clear book before scanning db values
+	book = Book{}
+
 	// insert values by db query
-	bookres, err := Insert_Book(bookreq.Title, bookreq.Author)
+	book, err := SaveBookDB(book.Title, book.Author)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Server Error. Please try again later.",
@@ -74,11 +75,11 @@ func Book_Insert(context *gin.Context) {
 	}
 
 	// send back 201 & newly inserted book
-	context.JSON(http.StatusCreated, bookres)
+	context.JSON(http.StatusCreated, book)
 }
 
 // TODO
-func Book_Update(context *gin.Context) {
+func UpdateBook(context *gin.Context) {
 	// read body as byte array
 	barray, err := io.ReadAll(context.Request.Body)
 	if err != nil {

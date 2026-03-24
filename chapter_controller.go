@@ -11,27 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Chapter_Get(context *gin.Context) {
+func GetChapter(context *gin.Context) {
 	// pull id from params
 	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
-	chapter_id, err := strconv.Atoi(id)
+	chapterID, err := strconv.Atoi(id)
 	if err != nil {
 		// handle bad data
 		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid Chapter Id",
+			"message": "Invalid Chapter ID.",
 		})
 		return
 	}
 	// query db for chapter by chapter id
-	result := Query_Chapter_By_Id(chapter_id)
-	var chapterres ChapterResponse
-	err = result.Scan(&chapterres.Id, &chapterres.Book_id, &chapterres.Number, &chapterres.Name, &chapterres.Created_On_UTC, &chapterres.Modified_On_UTC)
+	chapter, err := GetChapterByID(chapterID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
-				"message": fmt.Sprintf("No chapter found with Id %d", chapter_id),
+				"message": fmt.Sprintf("Chapter with ID %d not found.", chapterID),
 			})
 			return
 		} else {
@@ -42,22 +40,22 @@ func Chapter_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, chapterres)
+	context.JSON(http.StatusOK, chapter)
 
 }
 
-func Chapter_Insert(context *gin.Context) {
-	var chapterreq ChapterRequest
+func SaveChapter(context *gin.Context) {
+	var chapter Chapter
 	// check if body valid
-	if err := context.BindJSON(&chapterreq); err != nil {
-		log.Printf("BindJSON book failed. Err:\n%s\n", err)
+	if err := context.ShouldBindJSON(&chapter); err != nil {
+		log.Printf("ShouldBindJSON book failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "malformed request body",
+			"message": "Malformed request body.",
 		})
 		return
 	}
 
-	if err := Validate_Chapter_Insert(chapterreq.Book_id, chapterreq.Number, chapterreq.Name); err != nil {
+	if err := ValidateChapterInsert(chapter.Book_id, chapter.Number, chapter.Name); err != nil {
 		log.Printf("Chapter validation failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -65,8 +63,11 @@ func Chapter_Insert(context *gin.Context) {
 		return
 	}
 
+	// reset chapter before scanning db values in
+	chapter = Chapter{}
+
 	// insert values by db query
-	err := Insert_Chapter(chapterreq.Book_id, chapterreq.Number, chapterreq.Name)
+	chapter, err := SaveChapterDB(chapter.Book_id, chapter.Number, chapter.Name)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Server Error. Please try again later.",
@@ -75,37 +76,37 @@ func Chapter_Insert(context *gin.Context) {
 	}
 
 	// send back 204
-	context.Status(http.StatusNoContent)
+	context.JSON(http.StatusCreated, chapter)
 }
 
 // helper func to check if chapter number is valid
-func Valid_chapter_number(chapter_number uint16) bool {
-	if chapter_number > 0 {
+func ValidChapterNumber(chapterNumber uint16) bool {
+	if chapterNumber > 0 {
 		return true
 	}
 	return false
 }
 
 // helper func to check valid book id
-func Valid_book_id(book_id uint) bool {
-	if book_id > 0 {
+func ValidBookID(bookID uint) bool {
+	if bookID > 0 {
 		return true
 	}
 	return false
 }
 
 // consolidated logic to validate required fields for chapter insert
-func Validate_Chapter_Insert(book_id uint, number *uint16, name string) error {
+func ValidateChapterInsert(bookID uint, number *uint16, name string) error {
 	// require book id rel
-	if !Valid_book_id(book_id) {
-		return errors.New("Invalid book_id.")
+	if !ValidBookID(bookID) {
+		return errors.New("Invalid bookId.")
 	}
 
 	// name or chapter must be supplied
 	if len(name) < 1 {
 		// check chapter number if no name supplied
 		if number != nil {
-			if !Valid_chapter_number(*number) {
+			if !ValidChapterNumber(*number) {
 				return errors.New("Invalid Chapter number.")
 			}
 		} else {
