@@ -9,10 +9,10 @@ import (
 
 func main() {
 	// validate env vars & init global DB
-	if err := Validate_db_config(); err != nil {
+	if err := ValidateDBConfig(); err != nil {
 		log.Fatal(err)
 	}
-	err := Open_DB_Connection()
+	err := OpenDBConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,16 +21,16 @@ func main() {
 	router := gin.Default()
 
 	// BOOK
-	router.POST("/book", Book_Insert)
-	router.PATCH("/book/:id", Book_Update)
-	router.GET("/book/:id", Book_Get)
+	router.POST("/book", SaveBook)
+	router.PATCH("/book/:id", UpdateBook)
+	router.GET("/book/:id", GetBook)
 
 	// CHAPTER
-	router.GET("/chapter/:id", Chapter_Get)
-	router.POST("/chapter", Chapter_Insert)
+	router.GET("/chapter/:id", GetChapter)
+	router.POST("/chapter", SaveChapter)
 
 	// NOTE
-	router.GET("/note/:id", Note_Get)
+	router.GET("/note/:id", GetNote)
 
 	// start the server
 	fmt.Printf("Starting server on port %s...\n", PORT)
