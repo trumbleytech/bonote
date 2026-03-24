@@ -25,8 +25,8 @@ func Note_Get(context *gin.Context) {
 	}
 	// query db for note by note id
 	result := Query_Note_By_Id(note_id)
-	var note Note
-	err = result.Scan(&note.Id, &note.Chapter_id, &note.Name, &note.Content, &note.Created_On_UTC, &note.Modified_On_UTC)
+	var noteres NoteResponse
+	err = result.Scan(&noteres.Id, &noteres.Chapter_id, &noteres.Name, &noteres.Content, &noteres.Created_On_UTC, &noteres.Modified_On_UTC)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
@@ -41,5 +41,5 @@ func Note_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, note)
+	context.JSON(http.StatusOK, noteres)
 }

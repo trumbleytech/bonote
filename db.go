@@ -55,14 +55,16 @@ func Query_Note_By_Id(note_id int) *sql.Row {
 	return result
 }
 
-func Insert_Book(title, author string) error {
-	_, err := DB.Exec("INSERT INTO book (title,author) VALUES ($1,$2)", title, author)
+func Insert_Book(title, author string) (BookResponse, error) {
+	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,created_on_utc"
+	var bookRes BookResponse
+	err := DB.QueryRow(query, title, author).Scan(&bookRes.Id, &bookRes.Title, &bookRes.Author, &bookRes.Created_On_UTC)
 	if err != nil {
 		log.Printf("Book insert failed. Err:\n%s\n", err)
-		return err
+		return BookResponse{}, err
 	}
 	log.Printf("INSERT BOOK: title: %s || author: %s\n", title, author)
-	return nil
+	return bookRes, nil
 }
 
 func Insert_Chapter(book_id uint, number *uint16, name string) error {

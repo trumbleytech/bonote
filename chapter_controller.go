@@ -26,8 +26,8 @@ func Chapter_Get(context *gin.Context) {
 	}
 	// query db for chapter by chapter id
 	result := Query_Chapter_By_Id(chapter_id)
-	var chapter Chapter
-	err = result.Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
+	var chapterres ChapterResponse
+	err = result.Scan(&chapterres.Id, &chapterres.Book_id, &chapterres.Number, &chapterres.Name, &chapterres.Created_On_UTC, &chapterres.Modified_On_UTC)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
@@ -42,14 +42,14 @@ func Chapter_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, chapter)
+	context.JSON(http.StatusOK, chapterres)
 
 }
 
 func Chapter_Insert(context *gin.Context) {
-	var chapter Chapter
+	var chapterreq ChapterRequest
 	// check if body valid
-	if err := context.BindJSON(&chapter); err != nil {
+	if err := context.BindJSON(&chapterreq); err != nil {
 		log.Printf("BindJSON book failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "malformed request body",
@@ -57,7 +57,7 @@ func Chapter_Insert(context *gin.Context) {
 		return
 	}
 
-	if err := Validate_Chapter_Insert(chapter.Book_id, chapter.Number, chapter.Name); err != nil {
+	if err := Validate_Chapter_Insert(chapterreq.Book_id, chapterreq.Number, chapterreq.Name); err != nil {
 		log.Printf("Chapter validation failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -66,7 +66,7 @@ func Chapter_Insert(context *gin.Context) {
 	}
 
 	// insert values by db query
-	err := Insert_Chapter(chapter.Book_id, chapter.Number, chapter.Name)
+	err := Insert_Chapter(chapterreq.Book_id, chapterreq.Number, chapterreq.Name)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Server Error. Please try again later.",

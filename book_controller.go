@@ -28,8 +28,8 @@ func Book_Get(context *gin.Context) {
 
 	// query db for book by book id
 	result := Query_Book_By_Id(book_id)
-	var book Book
-	err = result.Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC)
+	var bookres BookResponse
+	err = result.Scan(&bookres.Id, &bookres.Title, &bookres.Author, &bookres.Created_On_UTC)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
@@ -44,28 +44,28 @@ func Book_Get(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, book)
+	context.JSON(http.StatusOK, bookres)
 }
 
 func Book_Insert(context *gin.Context) {
-	var book Book
+	var bookreq BookRequest
 	// check if body valid
-	if err := context.BindJSON(&book); err != nil {
+	if err := context.BindJSON(&bookreq); err != nil {
 		log.Printf("BindJSON book failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "malformed request body",
+			"message": "Malformed request body.",
 		})
 		return
 	}
 	// check that title has valid value
-	if len(book.Title) < 1 {
+	if len(bookreq.Title) < 1 {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Required field title not provided",
 		})
 		return
 	}
 	// insert values by db query
-	err := Insert_Book(book.Title, book.Author)
+	bookres, err := Insert_Book(bookreq.Title, bookreq.Author)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Server Error. Please try again later.",
@@ -73,8 +73,8 @@ func Book_Insert(context *gin.Context) {
 		return
 	}
 
-	// send back 204
-	context.Status(http.StatusNoContent)
+	// send back 201 & newly inserted book
+	context.JSON(http.StatusCreated, bookres)
 }
 
 // TODO
