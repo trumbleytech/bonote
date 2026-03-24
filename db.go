@@ -42,11 +42,11 @@ func OpenDBConnection() error {
 
 func GetBookByID(bookID int) (Book, error) {
 	var book Book
-	query := "SELECT id,title,author,created_on_utc FROM BOOK WHERE ID = $1"
+	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
 	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC, &book.Modified_On_UTC)
 	if err != nil {
 		log.Printf("GetBookByID failed. Err: %s\n", err)
-		return Book{}, GenerateResourceNotFoundError("Book", bookID)
+		return Book{}, err
 
 	}
 	return book, nil
@@ -55,7 +55,7 @@ func GetBookByID(bookID int) (Book, error) {
 func GetChapterByID(chapterID int) (Chapter, error) {
 	var chapter Chapter
 	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
-	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, chapter.Name, chapter.Created_On_UTC, chapter.Modified_On_UTC)
+	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
 	if err != nil {
 		log.Printf("GetChapterByID failed. Err: %s\n", err)
 		return Chapter{}, err
@@ -69,7 +69,7 @@ func GetNoteByID(noteID int) (Note, error) {
 	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.Chapter_id, &note.Name, &note.Content, &note.Created_On_UTC, &note.Modified_On_UTC)
 	if err != nil {
 		log.Printf("GetNoteByID failed. Err: %s\n", err)
-		return Note{}, GenerateResourceNotFoundError("Note", noteID)
+		return Note{}, err
 
 	}
 	return note, nil
@@ -95,8 +95,4 @@ func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
 		return Chapter{}, err
 	}
 	return chapter, nil
-}
-
-func GenerateResourceNotFoundError(resourceName string, resourceID int) error {
-	return fmt.Errorf("%s with ID %d not found.", resourceName, resourceID)
 }
