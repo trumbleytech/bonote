@@ -31,6 +31,7 @@ func main() {
 
 	// NOTE
 	router.GET("/note/:id", GetNote)
+	router.POST("/note", SaveNote)
 
 	// start the server
 	fmt.Printf("Starting server on port %s...\n", PORT)
