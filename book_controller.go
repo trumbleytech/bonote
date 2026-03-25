@@ -62,8 +62,6 @@ func SaveBook(context *gin.Context) {
 		})
 		return
 	}
-	// clear book before scanning db values
-	book = Book{}
 
 	// insert values by db query
 	book, err := SaveBookDB(book.Title, book.Author)
