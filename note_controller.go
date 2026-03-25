@@ -43,3 +43,41 @@ func GetNote(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, note)
 }
+
+func SaveNote(context *gin.Context) {
+	var note Note
+	// check valid body
+	if err := context.ShouldBindJSON(&note); err != nil {
+		log.Printf("ShouldBindJSON note failes. Err: %s\n", err)
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Malformed request body.",
+		})
+		return
+	}
+
+	// make sure chapterID is valid
+	if note.ChapterID < 1 {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Note chapterId is a required field.",
+		})
+		return
+	}
+
+	if len(note.Name) < 1 {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Note name is a required field.",
+		})
+		return
+	}
+
+	note, err := SaveNoteDB(note.Name, note.Content, note.ChapterID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	context.JSON(http.StatusCreated, note)
+
+}
