@@ -48,14 +48,14 @@ func SaveChapter(context *gin.Context) {
 	var chapter Chapter
 	// check if body valid
 	if err := context.ShouldBindJSON(&chapter); err != nil {
-		log.Printf("ShouldBindJSON book failed. Err:\n%s\n", err)
+		log.Printf("ShouldBindJSON chapter failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Malformed request body.",
 		})
 		return
 	}
 
-	if err := ValidateChapterInsert(chapter.Book_id, chapter.Number, chapter.Name); err != nil {
+	if err := ValidateChapterInsert(chapter.BookID, chapter.Number, chapter.Name); err != nil {
 		log.Printf("Chapter validation failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -63,11 +63,8 @@ func SaveChapter(context *gin.Context) {
 		return
 	}
 
-	// reset chapter before scanning db values in
-	chapter = Chapter{}
-
 	// insert values by db query
-	chapter, err := SaveChapterDB(chapter.Book_id, chapter.Number, chapter.Name)
+	chapter, err := SaveChapterDB(chapter.BookID, chapter.Number, chapter.Name)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Server Error. Please try again later.",
