@@ -43,7 +43,7 @@ func OpenDBConnection() error {
 func GetBookByID(bookID int) (Book, error) {
 	var book Book
 	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
-	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC, &book.Modified_On_UTC)
+	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetBookByID failed. Err: %s\n", err)
 		return Book{}, err
@@ -55,7 +55,7 @@ func GetBookByID(bookID int) (Book, error) {
 func GetChapterByID(chapterID int) (Chapter, error) {
 	var chapter Chapter
 	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
-	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
+	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetChapterByID failed. Err: %s\n", err)
 		return Chapter{}, err
@@ -66,7 +66,7 @@ func GetChapterByID(chapterID int) (Chapter, error) {
 func GetNoteByID(noteID int) (Note, error) {
 	var note Note
 	query := "SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1"
-	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.Chapter_id, &note.Name, &note.Content, &note.Created_On_UTC, &note.Modified_On_UTC)
+	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.ChapterID, &note.Name, &note.Content, &note.CreatedOnUTC, &note.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetNoteByID failed. Err: %s\n", err)
 		return Note{}, err
@@ -78,7 +78,7 @@ func GetNoteByID(noteID int) (Note, error) {
 func SaveBookDB(title, author string) (Book, error) {
 	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,created_on_utc"
 	var book Book
-	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.Created_On_UTC)
+	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC)
 	if err != nil {
 		log.Printf("SaveBook failed. Err:%s\n", err)
 		return Book{}, err
@@ -89,10 +89,21 @@ func SaveBookDB(title, author string) (Book, error) {
 func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
 	var chapter Chapter
 	query := "INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3) RETURNING id,book_id,number,name,created_on_utc,modified_on_utc"
-	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.Book_id, &chapter.Number, &chapter.Name, &chapter.Created_On_UTC, &chapter.Modified_On_UTC)
+	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveChapter failed. Err:%s\n", err)
 		return Chapter{}, err
 	}
 	return chapter, nil
+}
+
+func SaveNoteDB(name, content string, chapterID uint) (Note, error) {
+	var note Note
+	query := "INSERT INTO note (name,content,chapter_id) VALUES ($1,$2,$3) RETURNING id,name,content,chapter_id,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, name, content, chapterID).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
+	if err != nil {
+		log.Printf("SaveNote failed. Err:%s\n", err)
+		return Note{}, err
+	}
+	return note, nil
 }
