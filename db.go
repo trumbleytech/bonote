@@ -107,3 +107,25 @@ func SaveNoteDB(name, content string, chapterID uint) (Note, error) {
 	}
 	return note, nil
 }
+
+func GetBooksDB() ([]Book, error) {
+	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM book"
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Printf("GetBooksDB query failed. Err: %s\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var books []Book
+
+	for rows.Next() {
+		book := Book{}
+		if err := rows.Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC); err != nil {
+			log.Printf("rows.Scan failed. Err: %s\n", err)
+			continue
+		}
+		books = append(books, book)
+	}
+	return books, nil
+}
