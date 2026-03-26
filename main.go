@@ -26,6 +26,7 @@ func main() {
 	router.GET("/book/:id", GetBook)
 
 	// CHAPTER
+	router.GET("/chapters/:bookid", GetChaptersByBookID)
 	router.GET("/chapter/:id", GetChapter)
 	router.POST("/chapter", SaveChapter)
 

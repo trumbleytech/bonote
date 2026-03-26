@@ -44,6 +44,38 @@ func GetChapter(context *gin.Context) {
 
 }
 
+func GetChaptersByBookID(context *gin.Context) {
+	id := context.Params.ByName("bookid")
+
+	// convert string to id to validate input
+	bookID, err := strconv.Atoi(id)
+	if (err != nil) || ((bookID < 0) || (bookID > 2147483647)) {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid bookId",
+		})
+		return
+	}
+
+	chapters, err := GetChaptersByBookIDDB(bookID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("No chapters found with bookId %d", bookID),
+			})
+			return
+		} else {
+			context.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal Server Error. Please try again later.",
+			})
+			return
+		}
+	}
+
+	context.JSON(http.StatusOK, chapters)
+
+}
+
 func SaveChapter(context *gin.Context) {
 	var chapter Chapter
 	// check if body valid
