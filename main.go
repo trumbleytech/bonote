@@ -24,13 +24,17 @@ func main() {
 	router.POST("/book", SaveBook)
 	router.GET("/book/:id", GetBook)
 
-	// CHAPTER
+	// CHAPTERS BY BOOK
 	router.GET("/book/:id/chapters", GetChaptersByBookID)
+
+	// CHAPTER
 	router.GET("/chapter/:id", GetChapter)
 	router.POST("/chapter", SaveChapter)
 
-	// NOTE
+	// NOTES BY CHAPTER
 	router.GET("/chapter/:id/notes", GetNotesByChapterID)
+
+	// NOTE
 	router.GET("/note/:id", GetNote)
 	router.POST("/note", SaveNote)
 
