@@ -117,7 +117,7 @@ func GetBooksDB() ([]Book, error) {
 	}
 	defer rows.Close()
 
-	var books []Book
+	books := []Book{}
 
 	for rows.Next() {
 		book := Book{}
