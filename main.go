@@ -22,15 +22,15 @@ func main() {
 
 	// BOOK
 	router.POST("/book", SaveBook)
-	router.PATCH("/book/:id", UpdateBook)
 	router.GET("/book/:id", GetBook)
 
 	// CHAPTER
-	router.GET("/chapters/:bookid", GetChaptersByBookID)
+	router.GET("/book/:id/chapters", GetChaptersByBookID)
 	router.GET("/chapter/:id", GetChapter)
 	router.POST("/chapter", SaveChapter)
 
 	// NOTE
+	router.GET("/chapter/:id/notes", GetNotesByChapterID)
 	router.GET("/note/:id", GetNote)
 	router.POST("/note", SaveNote)
 
