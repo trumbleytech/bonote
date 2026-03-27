@@ -45,7 +45,7 @@ func GetChapter(context *gin.Context) {
 }
 
 func GetChaptersByBookID(context *gin.Context) {
-	id := context.Params.ByName("bookid")
+	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
 	bookID, err := strconv.Atoi(id)

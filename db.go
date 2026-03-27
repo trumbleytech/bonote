@@ -139,7 +139,7 @@ func GetChaptersByBookIDDB(bookID int) ([]Chapter, error) {
 	}
 	defer rows.Close()
 
-	var chapters []Chapter
+	chapters := []Chapter{}
 
 	for rows.Next() {
 		chapter := Chapter{}
@@ -150,4 +150,27 @@ func GetChaptersByBookIDDB(bookID int) ([]Chapter, error) {
 		chapters = append(chapters, chapter)
 	}
 	return chapters, nil
+}
+
+func GetNotesByChapterIDDB(chapterID int) ([]Note, error) {
+	query := "SELECT id,name,content,chapter_id,created_on_utc,modified_on_utc FROM note WHERE chapter_id = $1"
+	rows, err := DB.Query(query, chapterID)
+	if err != nil {
+		log.Printf("GetNotesByChapterID query failed. Err: %s\n", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	notes := []Note{}
+
+	for rows.Next() {
+		note := Note{}
+		if err := rows.Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.CreatedOnUTC, &note.ModifiedOnUTC); err != nil {
+			log.Printf("rows.Scan failed. Err: %s\n", err)
+			return nil, err
+		}
+		notes = append(notes, note)
+	}
+	return notes, nil
 }
