@@ -44,6 +44,55 @@ func GetChapter(context *gin.Context) {
 
 }
 
+func UpdateChapter(context *gin.Context) {
+	// pull id from params
+	id := context.Params.ByName("id")
+
+	// convert string to id to validate input
+	chapterID, err := strconv.Atoi(id)
+	if err != nil {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Chapter ID.",
+		})
+		return
+	}
+	// check req body for update vals
+	var chapter Chapter
+	if err := context.ShouldBindJSON(&chapter); err != nil {
+		log.Printf("ShouldBindJSON chapter failed. Err:\n%s\n", err)
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Malformed request body.",
+		})
+		return
+	}
+	// make sure req body values are valid
+	if err = ValidateChapterUpdate(chapter.Number, chapter.Name); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+	}
+
+	// attempt update
+	chapter, err = UpdateChapterDB(chapterID, chapter.Number, chapter.Name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Chapter with ID %d not found.", chapterID),
+			})
+			return
+		} else {
+			log.Printf("SQL Error:\n%s\n", err)
+			context.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Internal Server Error. Please try again later.",
+			})
+			return
+		}
+	}
+
+	context.JSON(http.StatusOK, chapter)
+}
+
 func GetChaptersByBookID(context *gin.Context) {
 	id := context.Params.ByName("id")
 
@@ -130,6 +179,23 @@ func ValidateChapterInsert(bookID uint, number *uint16, name string) error {
 	if !ValidBookID(bookID) {
 		return errors.New("Invalid bookId.")
 	}
+
+	// name or chapter must be supplied
+	if len(name) < 1 {
+		// check chapter number if no name supplied
+		if number != nil {
+			if !ValidChapterNumber(*number) {
+				return errors.New("Invalid Chapter number.")
+			}
+		} else {
+			return errors.New("Either Chapter Name or Chapter Number is required.")
+		}
+	}
+
+	return nil
+}
+
+func ValidateChapterUpdate(number *uint16, name string) error {
 
 	// name or chapter must be supplied
 	if len(name) < 1 {

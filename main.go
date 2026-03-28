@@ -21,8 +21,9 @@ func main() {
 	router := gin.Default()
 
 	// BOOK
-	router.POST("/book", SaveBook)
 	router.GET("/book/:id", GetBook)
+	router.POST("/book", SaveBook)
+	router.PUT("/book/:id", UpdateBook)
 
 	// CHAPTERS BY BOOK
 	router.GET("/book/:id/chapters", GetChaptersByBookID)
@@ -30,6 +31,7 @@ func main() {
 	// CHAPTER
 	router.GET("/chapter/:id", GetChapter)
 	router.POST("/chapter", SaveChapter)
+	router.PUT("chapter/:id", UpdateChapter)
 
 	// NOTES BY CHAPTER
 	router.GET("/chapter/:id/notes", GetNotesByChapterID)
@@ -37,6 +39,7 @@ func main() {
 	// NOTE
 	router.GET("/note/:id", GetNote)
 	router.POST("/note", SaveNote)
+	router.PUT("/note/:id", UpdateNote)
 
 	// start the server
 	fmt.Printf("Starting server on port %s...\n", PORT)
