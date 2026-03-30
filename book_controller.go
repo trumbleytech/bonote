@@ -124,3 +124,28 @@ func SaveBook(context *gin.Context) {
 	// send back 201 & newly inserted book
 	context.JSON(http.StatusCreated, book)
 }
+
+func DeleteBook(context *gin.Context) {
+	// pull id from params
+	id := context.Params.ByName("id")
+
+	// convert string to id to validate input
+	bookID, err := strconv.Atoi(id)
+	if (err != nil) || ((bookID < 0) || (bookID > 2147483647)) {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid bookId",
+		})
+		return
+	}
+
+	err = DeleteBookDB(bookID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	context.Status(http.StatusNoContent)
+}

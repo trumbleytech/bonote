@@ -211,3 +211,27 @@ func ValidateChapterUpdate(number *uint16, name string) error {
 
 	return nil
 }
+
+func DeleteChapter(context *gin.Context) {
+	// pull id from params
+	id := context.Params.ByName("id")
+
+	// convert string to id to validate input
+	chapterID, err := strconv.Atoi(id)
+	if err != nil {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Chapter ID.",
+		})
+		return
+	}
+
+	err = DeleteChapterDB(chapterID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+	context.Status(http.StatusNoContent)
+}

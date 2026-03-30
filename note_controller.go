@@ -152,3 +152,28 @@ func GetNotesByChapterID(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, notes)
 }
+
+func DeleteNote(context *gin.Context) {
+	// pull id from params
+	id := context.Params.ByName("id")
+
+	// convert string to id to validate input
+	noteID, err := strconv.Atoi(id)
+	if err != nil {
+		// handle bad data
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Note Id",
+		})
+		return
+	}
+
+	err = DeleteNoteDB(noteID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Server Error. Please try again later.",
+		})
+		return
+	}
+
+	context.Status(http.StatusNoContent)
+}

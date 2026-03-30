@@ -24,6 +24,7 @@ func main() {
 	router.GET("/book/:id", GetBook)
 	router.POST("/book", SaveBook)
 	router.PUT("/book/:id", UpdateBook)
+	router.DELETE("book/:id", DeleteBook)
 
 	// CHAPTERS BY BOOK
 	router.GET("/book/:id/chapters", GetChaptersByBookID)
@@ -32,6 +33,7 @@ func main() {
 	router.GET("/chapter/:id", GetChapter)
 	router.POST("/chapter", SaveChapter)
 	router.PUT("chapter/:id", UpdateChapter)
+	router.DELETE("chapter/:id", DeleteChapter)
 
 	// NOTES BY CHAPTER
 	router.GET("/chapter/:id/notes", GetNotesByChapterID)
@@ -40,6 +42,7 @@ func main() {
 	router.GET("/note/:id", GetNote)
 	router.POST("/note", SaveNote)
 	router.PUT("/note/:id", UpdateNote)
+	router.DELETE("/note/:id", DeleteNote)
 
 	// start the server
 	fmt.Printf("Starting server on port %s...\n", PORT)

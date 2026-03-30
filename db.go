@@ -219,3 +219,21 @@ func UpdateNoteDB(id int, name, content string) (Note, error) {
 	}
 	return note, nil
 }
+
+func DeleteBookDB(id int) error {
+	query := "DELETE FROM book WHERE id = $1"
+	_, err := DB.Exec(query, id)
+	return err
+}
+
+func DeleteChapterDB(id int) error {
+	query := "DELETE FROM chapter WHERE id = $1"
+	_, err := DB.Exec(query, id)
+	return err
+}
+
+func DeleteNoteDB(id int) error {
+	query := "DELETE FROM note WHERE id = $1"
+	_, err := DB.Exec(query, id)
+	return err
+}
