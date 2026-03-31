@@ -220,6 +220,10 @@ func UpdateNoteDB(id int, name, content string) (Note, error) {
 	return note, nil
 }
 
+/*
+DELETE FUNCS
+*/
+
 func DeleteBookDB(id int) error {
 	query := "DELETE FROM book WHERE id = $1"
 	_, err := DB.Exec(query, id)
