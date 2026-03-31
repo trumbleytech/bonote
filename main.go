@@ -40,7 +40,6 @@ func main() {
 		chapter.GET("/:id/notes", GetNotesByChapterID)
 	}
 
-	// NOTE
 	note := router.Group("/note")
 	{
 		note.GET("/:id", GetNote)
