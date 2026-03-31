@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -49,7 +48,7 @@ func main() {
 	}
 
 	// start the server
-	fmt.Printf("Starting server on port %s...\n", PORT)
+	log.Printf("Starting server on port %s...\n", PORT)
 	if err := router.Run(":" + PORT); err != nil {
 		log.Printf("Server failed to start. Error:\n%s", err)
 	}
