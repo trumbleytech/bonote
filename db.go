@@ -44,6 +44,17 @@ func OpenDBConnection() error {
 SELECT FUNCS
 */
 
+func GetUserByID(userID int) (User, error) {
+	var user User
+	query := "SELECT id,email,username,created_on_utc,modified_on_utc FROM users WHERE id = $1"
+	err := DB.QueryRow(query, userID).Scan(&user.Id, &user.Email, &user.Username, &user.CreatedOnUTC, &user.ModifiedOnUTC)
+	if err != nil {
+		log.Printf("GetUserByID failed. Err: %s\n", err)
+		return User{}, err
+	}
+	return user, nil
+}
+
 func GetBookByID(bookID int) (Book, error) {
 	var book Book
 	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
@@ -79,11 +90,11 @@ func GetNoteByID(noteID int) (Note, error) {
 	return note, nil
 }
 
-func GetBooksDB() ([]Book, error) {
-	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM book"
-	rows, err := DB.Query(query)
+func GetBooksByUserIDDB(userID int) ([]Book, error) {
+	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM book WHERE user_id = $1 ORDER BY id DESC"
+	rows, err := DB.Query(query, userID)
 	if err != nil {
-		log.Printf("GetBooksDB query failed. Err: %s\n", err)
+		log.Printf("GetBooksByUserIDDB query failed. Err: %s\n", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -149,6 +160,17 @@ func GetNotesByChapterIDDB(chapterID int) ([]Note, error) {
 /*
 INSERT FUNCS
 */
+
+func SaveUserDB(username, email, hashedPassword string) (User, error) {
+	query := "INSERT INTO users (username, email, hashed_password) VALUES ($1, $2, $3) RETURNING id,username,email,created_on_utc,modified_on_utc"
+	var user User
+	err := DB.QueryRow(query, username, email, hashedPassword).Scan(&user.Id, &user.Username, &user.Email, &user.CreatedOnUTC, &user.ModifiedOnUTC)
+	if err != nil {
+		log.Printf("SaveUser failed. Err: %\n", err)
+		return User{}, err
+	}
+	return user, nil
+}
 
 func SaveBookDB(title, author string) (Book, error) {
 	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,created_on_utc"
@@ -240,4 +262,19 @@ func DeleteNoteDB(id int) error {
 	query := "DELETE FROM note WHERE id = $1"
 	_, err := DB.Exec(query, id)
 	return err
+}
+
+/*
+SESSION FUNCS
+*/
+
+func GetUserIDBySessionTokenDB(token string) (int, error) {
+	var userID int
+	query := "SELECT user_id FROM sessions WHERE token = $1"
+	err := DB.QueryRow(query, token).Scan(&userID)
+	if err != nil {
+		log.Printf("GetUserIDBySessionTokenDB Failed. Err: %s\n", err)
+		return 0, err
+	}
+	return userID, nil
 }

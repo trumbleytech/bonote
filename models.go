@@ -29,3 +29,12 @@ type Note struct {
 	CreatedOnUTC  *time.Time `json:"createdOnUTC,omitempty"`
 	ModifiedOnUTC *time.Time `json:"modifiedOnUTC,omitempty"`
 }
+
+type User struct {
+	Id            int        `json:"id"`
+	Email         string     `json:"email"`
+	Username      string     `json:"username"`
+	Password      string     `json:"password,omitempty"`
+	CreatedOnUTC  *time.Time `json:"createdOnUTC,omitempty"`
+	ModifiedOnUTC *time.Time `json:"modifiedOnUTC,omitempty"`
+}
