@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -44,7 +45,21 @@ func OpenDBConnection() error {
 SELECT FUNCS
 */
 
-func GetUserByID(userID int) (User, error) {
+// to be used by login function
+func GetUserByUsernameDB(username string) (User, error) {
+	var user User
+	query := "SELECT id,hashed_password FROM users WHERE username = $1"
+	err := DB.QueryRow(query, username).Scan(&user.Id, &user.Password)
+	if err != nil {
+		log.Printf("GetUserByUsername failed. Err: %s\n", err)
+		return User{}, err
+	}
+	return user, nil
+
+}
+
+// to be used to pull relevant user data
+func GetUserByIDDB(userID int) (User, error) {
 	var user User
 	query := "SELECT id,email,username,created_on_utc,modified_on_utc FROM users WHERE id = $1"
 	err := DB.QueryRow(query, userID).Scan(&user.Id, &user.Email, &user.Username, &user.CreatedOnUTC, &user.ModifiedOnUTC)
@@ -55,7 +70,7 @@ func GetUserByID(userID int) (User, error) {
 	return user, nil
 }
 
-func GetBookByID(bookID int) (Book, error) {
+func GetBookByIDDB(bookID int) (Book, error) {
 	var book Book
 	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
 	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC)
@@ -67,7 +82,7 @@ func GetBookByID(bookID int) (Book, error) {
 	return book, nil
 }
 
-func GetChapterByID(chapterID int) (Chapter, error) {
+func GetChapterByIDDB(chapterID int) (Chapter, error) {
 	var chapter Chapter
 	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
 	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
@@ -78,7 +93,7 @@ func GetChapterByID(chapterID int) (Chapter, error) {
 	return chapter, nil
 }
 
-func GetNoteByID(noteID int) (Note, error) {
+func GetNoteByIDDB(noteID int) (Note, error) {
 	var note Note
 	query := "SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1"
 	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.ChapterID, &note.Name, &note.Content, &note.CreatedOnUTC, &note.ModifiedOnUTC)
@@ -246,6 +261,11 @@ func UpdateNoteDB(id int, name, content string) (Note, error) {
 DELETE FUNCS
 */
 
+func DeleteUserDB(id int) error {
+	query := "DELETE FROM users WHERE id = $1"
+	_, err := DB.Exec(query, id)
+	return err
+}
 func DeleteBookDB(id int) error {
 	query := "DELETE FROM book WHERE id = $1"
 	_, err := DB.Exec(query, id)
@@ -268,13 +288,19 @@ func DeleteNoteDB(id int) error {
 SESSION FUNCS
 */
 
-func GetUserIDBySessionTokenDB(token string) (int, error) {
+func GetUserIDBySessionTokenHashDB(tokenHash string) (int, error) {
 	var userID int
 	query := "SELECT user_id FROM sessions WHERE token = $1"
-	err := DB.QueryRow(query, token).Scan(&userID)
+	err := DB.QueryRow(query, tokenHash).Scan(&userID)
 	if err != nil {
 		log.Printf("GetUserIDBySessionTokenDB Failed. Err: %s\n", err)
 		return 0, err
 	}
 	return userID, nil
+}
+
+func CreateNewSession(userID int, token_hash string, expiresAt time.Time) error {
+	query := "INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1,$2,$3)"
+	_, err := DB.Exec(query, userID, token_hash, expiresAt)
+	return err
 }

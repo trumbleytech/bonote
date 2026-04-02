@@ -25,7 +25,7 @@ func GetChapter(context *gin.Context) {
 		return
 	}
 	// query db for chapter by chapter id
-	chapter, err := GetChapterByID(chapterID)
+	chapter, err := GetChapterByIDDB(chapterID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{

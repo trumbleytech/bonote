@@ -24,7 +24,7 @@ func GetNote(context *gin.Context) {
 		return
 	}
 	// query db for note by note id
-	note, err := GetNoteByID(noteID)
+	note, err := GetNoteByIDDB(noteID)
 
 	// handle db func error
 	if err != nil {
