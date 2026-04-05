@@ -290,7 +290,7 @@ SESSION FUNCS
 
 func GetUserIDBySessionTokenHashDB(tokenHash string) (int, error) {
 	var userID int
-	query := "SELECT user_id FROM sessions WHERE token = $1"
+	query := "SELECT user_id FROM sessions WHERE token = $1 AND expires_at < NOW()"
 	err := DB.QueryRow(query, tokenHash).Scan(&userID)
 	if err != nil {
 		log.Printf("GetUserIDBySessionTokenDB Failed. Err: %s\n", err)
@@ -302,5 +302,11 @@ func GetUserIDBySessionTokenHashDB(tokenHash string) (int, error) {
 func CreateNewSession(userID int, token_hash string, expiresAt time.Time) error {
 	query := "INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1,$2,$3)"
 	_, err := DB.Exec(query, userID, token_hash, expiresAt)
+	return err
+}
+
+func DeleteSessionByTokenHashDB(tokenHash string) error {
+	query := "DELETE FROM sessions WHERE token_hash = $1"
+	_, err := DB.Exec(query, tokenHash)
 	return err
 }

@@ -145,7 +145,7 @@ func LoginUser(context *gin.Context) {
 	rawToken := GenerateRawToken()
 	hashToken := HashToken(rawToken)
 	// validate token for 48 hours
-	expiresAt := time.Now().Add(time.Duration(time.Duration.Seconds(172800)))
+	expiresAt := GenerateSessionExpiresAtTime()
 
 	// save db vals and handle error
 	if err = CreateNewSession(user.Id, hashToken, expiresAt); err != nil {
@@ -156,29 +156,78 @@ func LoginUser(context *gin.Context) {
 	}
 
 	// send session token back to client
-	context.SetCookie("sid", rawToken, 172800, "/", "localhost", false, true)
+	context.SetCookie(
+		"sid",
+		rawToken,
+		172800,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
 	context.JSON(http.StatusOK, gin.H{
 		"status": "success",
 	})
 }
 
 func LogoutUser(context *gin.Context) {
+	// check if user has sid cookie
+	sid, err := context.Cookie("sid")
+	// if sid doesn't exist, user is not logged in
+	if err != nil {
+		ClearSessionID(context)
+		// not logged in, end state is reached
+		context.Status(http.StatusNoContent)
+		return
+	}
 
+	tokenHash := HashToken(sid)
+	err = DeleteSessionByTokenHashDB(tokenHash)
+	if err != nil {
+		log.Printf("Error deleting session by token hash. Err: %s\n", err)
+	}
+	ClearSessionID(context)
+	context.JSON(http.StatusOK, gin.H{
+		"message": "Logged out successfully.",
+	})
 }
 
 /*
 HELPER FUNCS
 */
 
-/*
-TODO
+func ClearSessionID(context *gin.Context) {
+	context.SetCookie(
+		"sid",
+		"",
+		-1,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+}
 
-	func ValidateSessionID(context *gin.Context) {
-		sid , err := context.Cookie("sid")
-		if err != nil {
-		}
+func GenerateSessionExpiresAtTime() time.Time {
+	return time.Now().UTC().Add(48 * time.Hour)
+}
+
+/*
+func ValidateSessionID(context *gin.Context) {
+	sid, err := context.Cookie("sid")
+	if err != nil {
+		log.Printf("No sid cookie found. Err: %s\n", err)
 	}
+	tokenHash := HashToken(sid)
+	userID, err = GetUserIDBySessionTokenHashDB(tokenHash)
+	if err != nil {
+		context.JSON(http.StatusForbidden, gin.H{
+			"message": "User is not logged in",
+		})
+	}
+}
 */
+
 func GenerateRawToken() string {
 	return rand.Text()
 }

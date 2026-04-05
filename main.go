@@ -19,6 +19,7 @@ func main() {
 	// init gin
 	router := gin.Default()
 	router.POST("/login", LoginUser)
+	router.POST("/logout", LogoutUser)
 	user := router.Group("/user")
 	{
 		user.GET("/:id", GetUser)
