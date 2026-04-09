@@ -35,9 +35,7 @@ func GetNote(context *gin.Context) {
 			return
 		} else {
 			log.Printf("SQL Error:\n%s\n", err)
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
+			HandleInternalServerError(context)
 			return
 		}
 	}
@@ -84,9 +82,7 @@ func UpdateNote(context *gin.Context) {
 			return
 		} else {
 			log.Printf("SQL Error:\n%s\n", err)
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
+			HandleInternalServerError(context)
 			return
 		}
 	}
@@ -122,9 +118,7 @@ func SaveNote(context *gin.Context) {
 
 	note, err := SaveNoteDB(note.Name, note.Content, note.ChapterID)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 
@@ -145,9 +139,7 @@ func GetNotesByChapterID(context *gin.Context) {
 	notes, err := GetNotesByChapterIDDB(chapterID)
 	if err != nil {
 		log.Printf("GetNotesByChapterID failed. Err: %s\n", err)
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 	context.JSON(http.StatusOK, notes)
@@ -169,9 +161,7 @@ func DeleteNote(context *gin.Context) {
 
 	err = DeleteNoteDB(noteID)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 

@@ -34,9 +34,7 @@ func GetBook(context *gin.Context) {
 			return
 		} else {
 			log.Printf("SQL Error:\n%s\n", err)
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
+			HandleInternalServerError(context)
 			return
 		}
 	}
@@ -84,9 +82,7 @@ func UpdateBook(context *gin.Context) {
 			return
 		} else {
 			log.Printf("SQL Error:\n%s\n", err)
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
+			HandleInternalServerError(context)
 			return
 		}
 	}
@@ -115,9 +111,7 @@ func SaveBook(context *gin.Context) {
 	// insert values by db query
 	book, err := SaveBookDB(book.Title, book.Author)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 
@@ -141,9 +135,7 @@ func DeleteBook(context *gin.Context) {
 
 	err = DeleteBookDB(bookID)
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 

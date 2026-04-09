@@ -36,9 +36,7 @@ func GetUser(context *gin.Context) {
 			return
 		} else {
 			log.Printf("SQL Error:\n%s\n", err)
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
+			HandleInternalServerError(context)
 			return
 		}
 	}
@@ -73,17 +71,13 @@ func SaveUser(context *gin.Context) {
 	hashed_password, err := bcrypt.GenerateFromPassword(password_bytes, 10)
 	if err != nil {
 		log.Printf("Error hashing user password. Err: %s\n", err)
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 	user, err = SaveUserDB(user.Username, user.Email, string(hashed_password))
 	if err != nil {
 		log.Printf("User Save DB failed. Err: %s\n", err)
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 	context.JSON(http.StatusCreated, user)
@@ -125,10 +119,7 @@ func LoginUser(context *gin.Context) {
 			})
 
 		} else {
-			context.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Internal Server Error. Please try again later.",
-			})
-
+			HandleInternalServerError(context)
 		}
 		return
 	}
@@ -149,9 +140,7 @@ func LoginUser(context *gin.Context) {
 
 	// save db vals and handle error
 	if err = CreateNewSession(user.Id, hashToken, expiresAt); err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Internal Server Error. Please try again later.",
-		})
+		HandleInternalServerError(context)
 		return
 	}
 
@@ -212,21 +201,15 @@ func GenerateSessionExpiresAtTime() time.Time {
 	return time.Now().UTC().Add(48 * time.Hour)
 }
 
-/*
-func ValidateSessionID(context *gin.Context) {
-	sid, err := context.Cookie("sid")
+func GetUserMinBySessionToken(sessionToken string) (UserMin, error) {
+	tokenHash := HashToken(sessionToken)
+	usermin, err := GetUserMinBySessionTokenHashDB(tokenHash)
 	if err != nil {
-		log.Printf("No sid cookie found. Err: %s\n", err)
+		return UserMin{}, err
 	}
-	tokenHash := HashToken(sid)
-	userID, err = GetUserIDBySessionTokenHashDB(tokenHash)
-	if err != nil {
-		context.JSON(http.StatusForbidden, gin.H{
-			"message": "User is not logged in",
-		})
-	}
+	return usermin, err
+
 }
-*/
 
 func GenerateRawToken() string {
 	return rand.Text()
