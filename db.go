@@ -61,8 +61,8 @@ func GetUserByUsernameDB(username string) (User, error) {
 // to be used to pull relevant user data
 func GetUserByIDDB(userID int) (User, error) {
 	var user User
-	query := "SELECT id,email,username,created_on_utc,modified_on_utc FROM users WHERE id = $1"
-	err := DB.QueryRow(query, userID).Scan(&user.Id, &user.Email, &user.Username, &user.CreatedOnUTC, &user.ModifiedOnUTC)
+	query := "SELECT id,email,username,role,created_on_utc,modified_on_utc FROM users WHERE id = $1"
+	err := DB.QueryRow(query, userID).Scan(&user.Id, &user.Email, &user.Username, &user.Role, &user.CreatedOnUTC, &user.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetUserByID failed. Err: %s\n", err)
 		return User{}, err
@@ -72,8 +72,8 @@ func GetUserByIDDB(userID int) (User, error) {
 
 func GetBookByIDDB(bookID int) (Book, error) {
 	var book Book
-	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
-	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC)
+	query := "SELECT id,title,author,user_id,created_on_utc,modified_on_utc FROM BOOK WHERE ID = $1"
+	err := DB.QueryRow(query, bookID).Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC, &book.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetBookByID failed. Err: %s\n", err)
 		return Book{}, err
@@ -84,8 +84,8 @@ func GetBookByIDDB(bookID int) (Book, error) {
 
 func GetChapterByIDDB(chapterID int) (Chapter, error) {
 	var chapter Chapter
-	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
-	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
+	query := "SELECT id,book_id,number,name,user_id,created_on_utc,modified_on_utc FROM chapter WHERE ID = $1"
+	err := DB.QueryRow(query, chapterID).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.UserID, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetChapterByID failed. Err: %s\n", err)
 		return Chapter{}, err
@@ -95,8 +95,8 @@ func GetChapterByIDDB(chapterID int) (Chapter, error) {
 
 func GetNoteByIDDB(noteID int) (Note, error) {
 	var note Note
-	query := "SELECT id,chapter_id,name,content,created_on_utc,modified_on_utc FROM note WHERE ID = $1"
-	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.ChapterID, &note.Name, &note.Content, &note.CreatedOnUTC, &note.ModifiedOnUTC)
+	query := "SELECT id,chapter_id,name,content,user_id,created_on_utc,modified_on_utc FROM note WHERE ID = $1"
+	err := DB.QueryRow(query, noteID).Scan(&note.Id, &note.ChapterID, &note.Name, &note.Content, &note.UserID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("GetNoteByID failed. Err: %s\n", err)
 		return Note{}, err
@@ -106,7 +106,7 @@ func GetNoteByIDDB(noteID int) (Note, error) {
 }
 
 func GetBooksByUserIDDB(userID int) ([]Book, error) {
-	query := "SELECT id,title,author,created_on_utc,modified_on_utc FROM book WHERE user_id = $1 ORDER BY id DESC"
+	query := "SELECT id,title,author,user_id,created_on_utc,modified_on_utc FROM book WHERE user_id = $1 ORDER BY id DESC"
 	rows, err := DB.Query(query, userID)
 	if err != nil {
 		log.Printf("GetBooksByUserIDDB query failed. Err: %s\n", err)
@@ -118,7 +118,7 @@ func GetBooksByUserIDDB(userID int) ([]Book, error) {
 
 	for rows.Next() {
 		book := Book{}
-		if err := rows.Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC); err != nil {
+		if err := rows.Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC, &book.ModifiedOnUTC); err != nil {
 			log.Printf("rows.Scan failed. Err: %s\n", err)
 			continue
 		}
@@ -128,7 +128,7 @@ func GetBooksByUserIDDB(userID int) ([]Book, error) {
 }
 
 func GetChaptersByBookIDDB(bookID int) ([]Chapter, error) {
-	query := "SELECT id,book_id,number,name,created_on_utc,modified_on_utc FROM chapter WHERE book_id = $1 ORDER BY number DESC"
+	query := "SELECT id,book_id,number,name,user_id,created_on_utc,modified_on_utc FROM chapter WHERE book_id = $1 ORDER BY number DESC"
 	rows, err := DB.Query(query, bookID)
 	if err != nil {
 		log.Printf("GetChaptersByBookIDDB query failed. Err: %s\n", err)
@@ -140,7 +140,7 @@ func GetChaptersByBookIDDB(bookID int) ([]Chapter, error) {
 
 	for rows.Next() {
 		chapter := Chapter{}
-		if err := rows.Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC); err != nil {
+		if err := rows.Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.UserID, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC); err != nil {
 			log.Printf("rows.Scan failed. Err: %s\n", err)
 			return nil, err
 		}
@@ -150,7 +150,7 @@ func GetChaptersByBookIDDB(bookID int) ([]Chapter, error) {
 }
 
 func GetNotesByChapterIDDB(chapterID int) ([]Note, error) {
-	query := "SELECT id,name,content,chapter_id,created_on_utc,modified_on_utc FROM note WHERE chapter_id = $1"
+	query := "SELECT id,name,content,chapter_id,user_id,created_on_utc,modified_on_utc FROM note WHERE chapter_id = $1"
 	rows, err := DB.Query(query, chapterID)
 	if err != nil {
 		log.Printf("GetNotesByChapterID query failed. Err: %s\n", err)
@@ -163,7 +163,7 @@ func GetNotesByChapterIDDB(chapterID int) ([]Note, error) {
 
 	for rows.Next() {
 		note := Note{}
-		if err := rows.Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.CreatedOnUTC, &note.ModifiedOnUTC); err != nil {
+		if err := rows.Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.UserID, &note.CreatedOnUTC, &note.ModifiedOnUTC); err != nil {
 			log.Printf("rows.Scan failed. Err: %s\n", err)
 			return nil, err
 		}
@@ -188,9 +188,9 @@ func SaveUserDB(username, email, hashedPassword string) (User, error) {
 }
 
 func SaveBookDB(title, author string) (Book, error) {
-	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,created_on_utc"
+	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,user_id,created_on_utc"
 	var book Book
-	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC)
+	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC)
 	if err != nil {
 		log.Printf("SaveBook failed. Err:%s\n", err)
 		return Book{}, err
@@ -200,8 +200,8 @@ func SaveBookDB(title, author string) (Book, error) {
 
 func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
 	var chapter Chapter
-	query := "INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3) RETURNING id,book_id,number,name,created_on_utc,modified_on_utc"
-	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
+	query := "INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3) RETURNING id,book_id,number,name,user_id,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.UserID, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveChapter failed. Err:%s\n", err)
 		return Chapter{}, err
@@ -211,8 +211,8 @@ func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
 
 func SaveNoteDB(name, content string, chapterID uint) (Note, error) {
 	var note Note
-	query := "INSERT INTO note (name,content,chapter_id) VALUES ($1,$2,$3) RETURNING id,name,content,chapter_id,created_on_utc,modified_on_utc"
-	err := DB.QueryRow(query, name, content, chapterID).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
+	query := "INSERT INTO note (name,content,chapter_id) VALUES ($1,$2,$3) RETURNING id,name,content,chapter_id,user_id,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, name, content, chapterID).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.UserID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveNote failed. Err:%s\n", err)
 		return Note{}, err
@@ -225,9 +225,9 @@ UPDATE FUNCS
 */
 
 func UpdateBookDB(id int, title, author string) (Book, error) {
-	var query string = "UPDATE book SET title = $1, author = $2 WHERE id = $3 RETURNING id,title,author,created_on_utc,modified_on_utc"
+	var query string = "UPDATE book SET title = $1, author = $2 WHERE id = $3 RETURNING id,title,author,user_id,created_on_utc,modified_on_utc"
 	var book Book
-	err := DB.QueryRow(query, title, author, id).Scan(&book.Id, &book.Title, &book.Author, &book.CreatedOnUTC, &book.ModifiedOnUTC)
+	err := DB.QueryRow(query, title, author, id).Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC, &book.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("UpdateBook failed. Err:%s\n", err)
 		return Book{}, err
@@ -237,8 +237,8 @@ func UpdateBookDB(id int, title, author string) (Book, error) {
 
 func UpdateChapterDB(id int, number *uint16, name string) (Chapter, error) {
 	var chapter Chapter
-	query := "UPDATE chapter SET number = $1, name = $2 WHERE id = $3 RETURNING id,book_id,number,name,created_on_utc,modified_on_utc"
-	err := DB.QueryRow(query, number, name, id).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
+	query := "UPDATE chapter SET number = $1, name = $2 WHERE id = $3 RETURNING id,book_id,number,name,user_id,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, number, name, id).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.UserID, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("UpdateChapter failed. Err:%s\n", err)
 		return Chapter{}, err
@@ -248,8 +248,8 @@ func UpdateChapterDB(id int, number *uint16, name string) (Chapter, error) {
 
 func UpdateNoteDB(id int, name, content string) (Note, error) {
 	var note Note
-	query := "UPDATE note SET name = $1, content = $2 WHERE id = $3 RETURNING id,name,content,chapter_id,created_on_utc,modified_on_utc"
-	err := DB.QueryRow(query, name, content, id).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
+	query := "UPDATE note SET name = $1, content = $2 WHERE id = $3 RETURNING id,name,content,chapter_id,user_id,created_on_utc,modified_on_utc"
+	err := DB.QueryRow(query, name, content, id).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.UserID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveNote failed. Err:%s\n", err)
 		return Note{}, err
@@ -288,18 +288,18 @@ func DeleteNoteDB(id int) error {
 SESSION FUNCS
 */
 
-func GetUserIDBySessionTokenHashDB(tokenHash string) (int, error) {
-	var userID int
-	query := "SELECT user_id FROM sessions WHERE token = $1 AND expires_at < NOW()"
-	err := DB.QueryRow(query, tokenHash).Scan(&userID)
+func GetUserMinBySessionTokenHashDB(tokenHash string) (UserMin, error) {
+	var usermin UserMin
+	query := "SELECT users.id,users.role FROM sessions JOIN users ON sessions.user_id = users.id WHERE sessions.token_hash = $1 AND expires_at > NOW()"
+	err := DB.QueryRow(query, tokenHash).Scan(&usermin.Id, &usermin.Role)
 	if err != nil {
-		log.Printf("GetUserIDBySessionTokenDB Failed. Err: %s\n", err)
-		return 0, err
+		log.Printf("GetUserMinBySessionTokenDB Failed. Err: %s\n", err)
+		return UserMin{}, err
 	}
-	return userID, nil
+	return usermin, nil
 }
 
-func CreateNewSession(userID int, token_hash string, expiresAt time.Time) error {
+func CreateNewSession(userID uint, token_hash string, expiresAt time.Time) error {
 	query := "INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1,$2,$3)"
 	_, err := DB.Exec(query, userID, token_hash, expiresAt)
 	return err
