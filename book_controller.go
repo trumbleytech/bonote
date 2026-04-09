@@ -11,6 +11,8 @@ import (
 )
 
 func GetBook(context *gin.Context) {
+	// id parsing first to fail fast
+
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -23,6 +25,13 @@ func GetBook(context *gin.Context) {
 		})
 		return
 	}
+	// pull usermin via session cookie
+	sid, err := context.Cookie("sid")
+	if err != nil {
+		HandleNotLoggedIn(context)
+		return
+	}
+	usermin, err := GetUserMinBySessionToken(sid)
 
 	// query db for book by book id
 	book, err := GetBookByIDDB(bookID)
@@ -38,7 +47,13 @@ func GetBook(context *gin.Context) {
 			return
 		}
 	}
-	context.JSON(http.StatusOK, book)
+
+	// handle requesting user doesn't own resource
+	if usermin.Role == "admin" || usermin.Id == book.UserID {
+		context.JSON(http.StatusOK, book)
+	} else {
+		HandleForbidden(context)
+	}
 }
 
 func UpdateBook(context *gin.Context) {
