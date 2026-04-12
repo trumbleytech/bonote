@@ -187,10 +187,10 @@ func SaveUserDB(username, email, hashedPassword string) (User, error) {
 	return user, nil
 }
 
-func SaveBookDB(title, author string) (Book, error) {
-	var query string = "INSERT INTO book (title,author) VALUES ($1,$2) RETURNING id,title,author,user_id,created_on_utc"
+func SaveBookDB(title, author string, userID int) (Book, error) {
+	var query string = "INSERT INTO book (title,author,user_id) VALUES ($1,$2,$3) RETURNING id,title,author,user_id,created_on_utc"
 	var book Book
-	err := DB.QueryRow(query, title, author).Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC)
+	err := DB.QueryRow(query, title, author, userID).Scan(&book.Id, &book.Title, &book.Author, &book.UserID, &book.CreatedOnUTC)
 	if err != nil {
 		log.Printf("SaveBook failed. Err:%s\n", err)
 		return Book{}, err

@@ -28,30 +28,30 @@ func main() {
 	}
 	book := router.Group("/book")
 	{
-		book.GET("/:id", GetBook)
-		book.POST("", SaveBook)
-		book.PUT("/:id", UpdateBook)
-		book.DELETE("/:id", DeleteBook)
+		book.GET("/:id", RequireAuth, GetBook)
+		book.POST("", RequireAuth, SaveBook)
+		book.PUT("/:id", RequireAuth, UpdateBook)
+		book.DELETE("/:id", RequireAuth, DeleteBook)
 		// pull chapters by book id
-		book.GET("/:id/chapters", GetChaptersByBookID)
+		book.GET("/:id/chapters", RequireAuth, GetChaptersByBookID)
 	}
 
 	chapter := router.Group("/chapter")
 	{
-		chapter.GET("/:id", GetChapter)
-		chapter.POST("", SaveChapter)
-		chapter.PUT("/:id", UpdateChapter)
-		chapter.DELETE("/:id", DeleteChapter)
+		chapter.GET("/:id", RequireAuth, GetChapter)
+		chapter.POST("", RequireAuth, SaveChapter)
+		chapter.PUT("/:id", RequireAuth, UpdateChapter)
+		chapter.DELETE("/:id", RequireAuth, DeleteChapter)
 		// get notes by chapter id
-		chapter.GET("/:id/notes", GetNotesByChapterID)
+		chapter.GET("/:id/notes", RequireAuth, GetNotesByChapterID)
 	}
 
 	note := router.Group("/note")
 	{
-		note.GET("/:id", GetNote)
-		note.POST("", SaveNote)
-		note.PUT("/:id", UpdateNote)
-		note.DELETE("/:id", DeleteNote)
+		note.GET("/:id", RequireAuth, GetNote)
+		note.POST("", RequireAuth, SaveNote)
+		note.PUT("/:id", RequireAuth, UpdateNote)
+		note.DELETE("/:id", RequireAuth, DeleteNote)
 	}
 
 	// start the server

@@ -17,8 +17,11 @@ func HandleInternalServerError(context *gin.Context) {
 	})
 }
 
-func UserCanModifyResource(usermin UserMin, resourceUserID uint) bool {
-	return usermin.Role == "admin" || usermin.Id == int(resourceUserID)
+func UserCanModifyResource(usermin UserMin, resourceUserID int) bool {
+	if usermin.Role == "admin" || usermin.Id == resourceUserID {
+		return true
+	}
+	return false
 }
 
 func HandleNotLoggedIn(context *gin.Context) {

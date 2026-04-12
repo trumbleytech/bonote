@@ -104,7 +104,7 @@ func LoginUser(context *gin.Context) {
 	}
 
 	// handle missing fields
-	if len(body.Username) < 1 || len(body.Password) < 1 {
+	if !ValidLoginRequestBody(body.Username, body.Password) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Username and Password are required to login.",
 		})
@@ -184,6 +184,10 @@ func LogoutUser(context *gin.Context) {
 /*
 HELPER FUNCS
 */
+
+func ValidLoginRequestBody(username, password string) bool {
+	return len(username) > 0 && len(password) > 0
+}
 
 func ClearSessionID(context *gin.Context) {
 	context.SetCookie(
