@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func HandleInternalServerError(context *gin.Context) {
 	})
 }
 
-func UserCanModifyResource(usermin UserMin, resourceUserID int) bool {
+func UserCanAccessResource(usermin UserMin, resourceUserID int) bool {
 	if usermin.Role == "admin" || usermin.Id == resourceUserID {
 		return true
 	}
@@ -28,4 +29,12 @@ func HandleNotLoggedIn(context *gin.Context) {
 	context.JSON(http.StatusUnauthorized, gin.H{
 		"message": "You are not logged in.",
 	})
+}
+
+func GetUserMinFromContext(context *gin.Context) (UserMin, error) {
+	value, exists := context.Get("usermin")
+	if !exists {
+		return UserMin{}, errors.New("usermin does not exist")
+	}
+	return value.(UserMin), nil
 }

@@ -11,6 +11,10 @@ import (
 )
 
 func GetNote(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -39,10 +43,19 @@ func GetNote(context *gin.Context) {
 			return
 		}
 	}
+
+	if !UserCanAccessResource(usermin, note.UserID) {
+		HandleForbidden(context)
+		return
+	}
 	context.JSON(http.StatusOK, note)
 }
 
 func UpdateNote(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -55,9 +68,9 @@ func UpdateNote(context *gin.Context) {
 		})
 		return
 	}
-	var note Note
+	var reqnote Note
 	// check valid body
-	if err := context.ShouldBindJSON(&note); err != nil {
+	if err := context.ShouldBindJSON(&reqnote); err != nil {
 		log.Printf("ShouldBindJSON note failed. Err: %s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Malformed request body.",
@@ -66,14 +79,35 @@ func UpdateNote(context *gin.Context) {
 	}
 
 	// verify note name is still valid
-	if len(note.Name) < 1 {
+	if len(reqnote.Name) < 1 {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Note name is a required field.",
 		})
 		return
 	}
 
-	note, err = UpdateNoteDB(noteID, note.Name, note.Content)
+	note, err := GetNoteByIDDB(noteID)
+
+	// handle db func error
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Note with %d not found.", noteID),
+			})
+			return
+		} else {
+			log.Printf("SQL Error:\n%s\n", err)
+			HandleInternalServerError(context)
+			return
+		}
+	}
+
+	if !UserCanAccessResource(usermin, note.UserID) {
+		HandleForbidden(context)
+		return
+	}
+
+	note, err = UpdateNoteDB(noteID, reqnote.Name, reqnote.Content)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
@@ -91,6 +125,10 @@ func UpdateNote(context *gin.Context) {
 }
 
 func SaveNote(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	var note Note
 	// check valid body
 	if err := context.ShouldBindJSON(&note); err != nil {
@@ -116,7 +154,7 @@ func SaveNote(context *gin.Context) {
 		return
 	}
 
-	note, err := SaveNoteDB(note.Name, note.Content, note.ChapterID)
+	note, err = SaveNoteDB(note.Name, note.Content, note.ChapterID, usermin.Id)
 	if err != nil {
 		HandleInternalServerError(context)
 		return
@@ -127,6 +165,11 @@ func SaveNote(context *gin.Context) {
 }
 
 func GetNotesByChapterID(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
+
 	id := context.Params.ByName("id")
 
 	chapterID, err := strconv.Atoi(id)
@@ -134,6 +177,23 @@ func GetNotesByChapterID(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Chapter ID.",
 		})
+		return
+	}
+
+	chapter, err := GetChapterByIDDB(chapterID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Chapter with ID %d not found.", chapterID),
+			})
+			return
+		}
+		HandleInternalServerError(context)
+		return
+	}
+
+	if !UserCanAccessResource(usermin, chapter.UserID) {
+		HandleForbidden(context)
 		return
 	}
 	notes, err := GetNotesByChapterIDDB(chapterID)
@@ -146,6 +206,10 @@ func GetNotesByChapterID(context *gin.Context) {
 }
 
 func DeleteNote(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -156,6 +220,26 @@ func DeleteNote(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Note Id",
 		})
+		return
+	}
+	note, err := GetNoteByIDDB(noteID)
+
+	// handle db func error
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Note with %d not found.", noteID),
+			})
+			return
+		} else {
+			log.Printf("SQL Error:\n%s\n", err)
+			HandleInternalServerError(context)
+			return
+		}
+	}
+
+	if !UserCanAccessResource(usermin, note.UserID) {
+		HandleForbidden(context)
 		return
 	}
 

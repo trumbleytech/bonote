@@ -106,7 +106,7 @@ func GetNoteByIDDB(noteID int) (Note, error) {
 }
 
 func GetBooksByUserIDDB(userID int) ([]Book, error) {
-	query := "SELECT id,title,author,user_id,created_on_utc,modified_on_utc FROM book WHERE user_id = $1 ORDER BY id DESC"
+	query := "SELECT id,title,author,user_id,created_on_utc,modified_on_utc FROM book WHERE user_id = $1 ORDER BY id ASC"
 	rows, err := DB.Query(query, userID)
 	if err != nil {
 		log.Printf("GetBooksByUserIDDB query failed. Err: %s\n", err)
@@ -198,9 +198,9 @@ func SaveBookDB(title, author string, userID int) (Book, error) {
 	return book, nil
 }
 
-func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
+func SaveChapterDB(bookID uint, number *uint16, name string, userID int) (Chapter, error) {
 	var chapter Chapter
-	query := "INSERT INTO chapter (book_id,number,name) VALUES ($1,$2,$3) RETURNING id,book_id,number,name,user_id,created_on_utc,modified_on_utc"
+	query := "INSERT INTO chapter (book_id,number,name,user_id) VALUES ($1,$2,$3,$4) RETURNING id,book_id,number,name,user_id,created_on_utc,modified_on_utc"
 	err := DB.QueryRow(query, bookID, number, name).Scan(&chapter.Id, &chapter.BookID, &chapter.Number, &chapter.Name, &chapter.UserID, &chapter.CreatedOnUTC, &chapter.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveChapter failed. Err:%s\n", err)
@@ -209,9 +209,9 @@ func SaveChapterDB(bookID uint, number *uint16, name string) (Chapter, error) {
 	return chapter, nil
 }
 
-func SaveNoteDB(name, content string, chapterID uint) (Note, error) {
+func SaveNoteDB(name, content string, chapterID uint, userID int) (Note, error) {
 	var note Note
-	query := "INSERT INTO note (name,content,chapter_id) VALUES ($1,$2,$3) RETURNING id,name,content,chapter_id,user_id,created_on_utc,modified_on_utc"
+	query := "INSERT INTO note (name,content,chapter_id,user_id) VALUES ($1,$2,$3,$4) RETURNING id,name,content,chapter_id,user_id,created_on_utc,modified_on_utc"
 	err := DB.QueryRow(query, name, content, chapterID).Scan(&note.Id, &note.Name, &note.Content, &note.ChapterID, &note.UserID, &note.CreatedOnUTC, &note.ModifiedOnUTC)
 	if err != nil {
 		log.Printf("SaveNote failed. Err:%s\n", err)

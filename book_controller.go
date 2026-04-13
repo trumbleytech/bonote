@@ -12,6 +12,10 @@ import (
 )
 
 func GetBook(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// id parsing first to fail fast
 
 	// pull id from params
@@ -26,12 +30,7 @@ func GetBook(context *gin.Context) {
 		})
 		return
 	}
-	value, exists := context.Get("usermin")
-	if !exists {
-		HandleInternalServerError(context)
-		return
-	}
-	usermin := value.(UserMin)
+
 	// query db for book by book id
 	book, err := GetBookByIDDB(bookID)
 	if err != nil {
@@ -47,7 +46,7 @@ func GetBook(context *gin.Context) {
 		}
 	}
 
-	if !UserCanModifyResource(usermin, book.UserID) {
+	if !UserCanAccessResource(usermin, book.UserID) {
 		HandleForbidden(context)
 	} else {
 		context.JSON(http.StatusOK, book)
@@ -55,6 +54,10 @@ func GetBook(context *gin.Context) {
 }
 
 func UpdateBook(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// use URL param as id source
 	id := context.Params.ByName("id")
 
@@ -66,12 +69,6 @@ func UpdateBook(context *gin.Context) {
 		})
 		return
 	}
-	value, exists := context.Get("usermin")
-	if !exists {
-		HandleInternalServerError(context)
-		return
-	}
-	usermin := value.(UserMin)
 	// query db for book by book id
 	book, err := GetBookByIDDB(bookID)
 	if err != nil {
@@ -87,7 +84,7 @@ func UpdateBook(context *gin.Context) {
 		}
 	}
 
-	if !UserCanModifyResource(usermin, book.UserID) {
+	if !UserCanAccessResource(usermin, book.UserID) {
 		HandleForbidden(context)
 		return
 	}
@@ -128,12 +125,10 @@ func UpdateBook(context *gin.Context) {
 }
 
 func SaveBook(context *gin.Context) {
-	value, exists := context.Get("usermin")
-	if !exists {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
 		HandleInternalServerError(context)
-		return
 	}
-	usermin := value.(UserMin)
 
 	var book Book
 	// check if body valid
@@ -153,7 +148,7 @@ func SaveBook(context *gin.Context) {
 	}
 
 	// insert values by db query
-	book, err := SaveBookDB(book.Title, book.Author, usermin.Id)
+	book, err = SaveBookDB(book.Title, book.Author, usermin.Id)
 	if err != nil {
 		HandleInternalServerError(context)
 		return
@@ -164,6 +159,10 @@ func SaveBook(context *gin.Context) {
 }
 
 func DeleteBook(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -176,13 +175,6 @@ func DeleteBook(context *gin.Context) {
 		})
 		return
 	}
-
-	value, exists := context.Get("usermin")
-	if !exists {
-		HandleInternalServerError(context)
-		return
-	}
-	usermin := value.(UserMin)
 
 	book, err := GetBookByIDDB(bookID)
 	if err != nil {
@@ -197,7 +189,7 @@ func DeleteBook(context *gin.Context) {
 	}
 
 	// handle auth
-	if !UserCanModifyResource(usermin, book.UserID) {
+	if !UserCanAccessResource(usermin, book.UserID) {
 		HandleForbidden(context)
 		return
 	}

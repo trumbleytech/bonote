@@ -12,6 +12,10 @@ import (
 )
 
 func GetChapter(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -38,11 +42,20 @@ func GetChapter(context *gin.Context) {
 			return
 		}
 	}
+
+	if !UserCanAccessResource(usermin, chapter.UserID) {
+		HandleForbidden(context)
+		return
+	}
 	context.JSON(http.StatusOK, chapter)
 
 }
 
 func UpdateChapter(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -56,8 +69,8 @@ func UpdateChapter(context *gin.Context) {
 		return
 	}
 	// check req body for update vals
-	var chapter Chapter
-	if err := context.ShouldBindJSON(&chapter); err != nil {
+	var reqchapter Chapter
+	if err := context.ShouldBindJSON(&reqchapter); err != nil {
 		log.Printf("ShouldBindJSON chapter failed. Err:\n%s\n", err)
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Malformed request body.",
@@ -65,14 +78,22 @@ func UpdateChapter(context *gin.Context) {
 		return
 	}
 	// make sure req body values are valid
-	if err = ValidateChapterUpdate(chapter.Number, chapter.Name); err != nil {
+	if err = ValidateChapterUpdate(reqchapter.Number, reqchapter.Name); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
+		return
+	}
+
+	chapter, err := GetChapterByIDDB(chapterID)
+
+	if !UserCanAccessResource(usermin, chapter.UserID) {
+		HandleForbidden(context)
+		return
 	}
 
 	// attempt update
-	chapter, err = UpdateChapterDB(chapterID, chapter.Number, chapter.Name)
+	chapter, err = UpdateChapterDB(chapterID, reqchapter.Number, reqchapter.Name)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			context.JSON(http.StatusNotFound, gin.H{
@@ -90,6 +111,10 @@ func UpdateChapter(context *gin.Context) {
 }
 
 func GetChaptersByBookID(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	id := context.Params.ByName("id")
 
 	// convert string to id to validate input
@@ -99,6 +124,23 @@ func GetChaptersByBookID(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid bookId",
 		})
+		return
+	}
+
+	book, err := GetBookByIDDB(bookID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Book with ID %d not found.", bookID),
+			})
+			return
+		}
+		HandleInternalServerError(context)
+		return
+	}
+
+	if !UserCanAccessResource(usermin, book.UserID) {
+		HandleForbidden(context)
 		return
 	}
 
@@ -120,6 +162,10 @@ func GetChaptersByBookID(context *gin.Context) {
 }
 
 func SaveChapter(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	var chapter Chapter
 	// check if body valid
 	if err := context.ShouldBindJSON(&chapter); err != nil {
@@ -139,7 +185,7 @@ func SaveChapter(context *gin.Context) {
 	}
 
 	// insert values by db query
-	chapter, err := SaveChapterDB(chapter.BookID, chapter.Number, chapter.Name)
+	chapter, err = SaveChapterDB(chapter.BookID, chapter.Number, chapter.Name, usermin.Id)
 	if err != nil {
 		HandleInternalServerError(context)
 		return
@@ -205,6 +251,10 @@ func ValidateChapterUpdate(number *uint16, name string) error {
 }
 
 func DeleteChapter(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	// pull id from params
 	id := context.Params.ByName("id")
 
@@ -215,6 +265,23 @@ func DeleteChapter(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid Chapter ID.",
 		})
+		return
+	}
+
+	chapter, err := GetChapterByIDDB(chapterID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("Chapter with ID %d not found.", chapterID),
+			})
+			return
+		}
+		HandleInternalServerError(context)
+		return
+	}
+
+	if !UserCanAccessResource(usermin, chapter.UserID) {
+		HandleForbidden(context)
 		return
 	}
 

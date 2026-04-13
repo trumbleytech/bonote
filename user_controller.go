@@ -16,6 +16,10 @@ import (
 )
 
 func GetUser(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
 	id := context.Params.ByName("id")
 
 	userID, err := strconv.Atoi(id)
@@ -40,10 +44,15 @@ func GetUser(context *gin.Context) {
 			return
 		}
 	}
+
+	if !UserCanAccessResource(usermin, int(User.Id)) {
+		HandleForbidden(context)
+		return
+	}
 	context.JSON(http.StatusOK, User)
 }
 
-func SaveUser(context *gin.Context) {
+func RegisterUser(context *gin.Context) {
 	var user User
 	// check that req binds to model
 	if err := context.ShouldBindJSON(&user); err != nil {
@@ -173,7 +182,7 @@ func LogoutUser(context *gin.Context) {
 	tokenHash := HashToken(sid)
 	err = DeleteSessionByTokenHashDB(tokenHash)
 	if err != nil {
-		log.Printf("Error deleting session by token hash. Err: %s\n", err)
+		go log.Printf("Error deleting session by token hash. Err: %s\n", err)
 	}
 	ClearSessionID(context)
 	context.JSON(http.StatusOK, gin.H{
@@ -222,4 +231,24 @@ func GenerateRawToken() string {
 func HashToken(token string) string {
 	bytes := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(bytes[:])
+}
+
+func GetBooksByUserID(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+	}
+
+	books, err := GetBooksByUserIDDB(usermin.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("No books found with userId %d", usermin.Id),
+			})
+			return
+		}
+		HandleInternalServerError(context)
+		return
+	}
+	context.JSON(http.StatusOK, books)
 }
