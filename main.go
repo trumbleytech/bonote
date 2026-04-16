@@ -26,7 +26,7 @@ func main() {
 	user.Use(RequireAuth)
 	{
 		user.GET("/:id", GetUser)
-		user.DELETE("/:id", DeleteUser)
+		user.DELETE("/delete", DeleteUser)
 	}
 	book := router.Group("/book")
 	book.Use(RequireAuth)

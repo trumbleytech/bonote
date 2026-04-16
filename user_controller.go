@@ -94,6 +94,20 @@ func RegisterUser(context *gin.Context) {
 }
 
 func DeleteUser(context *gin.Context) {
+	usermin, err := GetUserMinFromContext(context)
+	if err != nil {
+		HandleInternalServerError(context)
+		return
+	}
+	err = DeleteUserDB(usermin.Id)
+	if err != nil {
+		HandleInternalServerError(context)
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{
+		"message": "User deleted successfully.",
+	})
 
 }
 
